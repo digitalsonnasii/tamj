@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mob Justice: An Analysis of Vigilantism in Bangladesh</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Somber Neutrals (Shades of gray, off-white, with a stark red accent for critical data) -->
+    <!-- Application Structure Plan: The SPA is designed as a single-page, vertically scrolling narrative dashboard. This structure was chosen to guide the user through a complex topic in a logical, digestible flow, moving from high-level statistics to deep-dive analysis. The flow is: 1) Hero section to set the tone. 2) A "Crisis at a Glance" dashboard with key stats for immediate impact. 3) An interactive 'Mob-Viral-Justice Loop' diagram to explain the core mechanism. 4) A central, interactive timeline chart showing the evolution of violence. 5) Personal, card-based case studies to humanize the data. 6) An accordion section for exploring the root causes. 7) A clear, card-based presentation of solutions. This thematic, interactive approach is more engaging and user-friendly than a linear report, allowing users to explore the facets of the issue at their own pace. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Mob killing statistics over years. Goal: Show change/trends. Viz: Interactive Bar Chart (Chart.js). Interaction: Hover for details. Justification: A bar chart is ideal for comparing discrete yearly totals and highlighting the dramatic 2024 surge. Interactivity makes it explorable.
+        - Report Info: 'Mob-Viral-Justice Loop' concept. Goal: Organize/Explain a process. Viz: Custom HTML/CSS/JS diagram. Interaction: Clicking on each stage reveals explanatory text. Justification: An interactive diagram is far more effective at explaining a cyclical process than static text, improving comprehension and engagement.
+        - Report Info: Root causes (Police/Judicial failure, Digital factors). Goal: Organize/Inform. Viz: Interactive Accordion (HTML/CSS/JS). Interaction: Click to expand/collapse. Justification: An accordion prevents information overload, keeping the interface clean while allowing users to drill down into specific areas of interest.
+        - Report Info: Case Studies (Renu, Hossain). Goal: Inform/Humanize. Viz: Card-based layout. Justification: Presents summaries for scannability and allows users to opt-in for deeper reading.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 500px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s ease, border-bottom-color 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #dc3545;
+            border-bottom-color: #dc3545;
+        }
+        .stat-card {
+            border-left: 4px solid #dc3545;
+        }
+        .loop-node {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+        .loop-node:hover, .loop-node.active {
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px -3px rgba(220, 53, 69, 0.3), 0 4px 6px -2px rgba(220, 53, 69, 0.1);
+        }
+        .accordion-button.active .accordion-icon {
+            transform: rotate(180deg);
+        }
+        .accordion-icon {
+            transition: transform 0.3s ease;
+        }
+        .case-card {
+            transition: box-shadow 0.3s ease;
+        }
+        .case-card:hover {
+             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+        .social-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #4a5568;
+            color: #ffffff;
+            transition: background-color 0.3s ease;
+        }
+        .social-btn:hover {
+            background-color: #dc3545;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 leading-relaxed">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold text-gray-800">The Anatomy of Mob Justice</h1>
+            <div class="hidden md:flex space-x-6 text-gray-600 font-medium">
+                <a href="#overview" class="nav-link">Crisis Overview</a>
+                <a href="#timeline" class="nav-link">Timeline of Violence</a>
+                <a href="#causes" class="nav-link">Root Causes</a>
+                <a href="#solutions" class="nav-link">Path to Solutions</a>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden text-gray-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden bg-white">
+            <a href="#overview" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100">Crisis Overview</a>
+            <a href="#timeline" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100">Timeline of Violence</a>
+            <a href="#causes" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100">Root Causes</a>
+            <a href="#solutions" class="block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100">Path to Solutions</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 md:py-12">
+
+        <section id="hero" class="text-center py-12 md:py-20">
+            <h2 class="text-4xl md:text-6xl font-extrabold text-gray-800 leading-tight">When the Crowd is Judge, Jury, and Executioner</h2>
+            <p class="mt-4 text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">A deep analysis of extrajudicial violence, known as 'Gonopituni', in Bangladesh. This report shows how it has evolved from sporadic crime control into an institutional, political, and digitally-accelerated crisis.</p>
+        </section>
+        
+        <hr class="my-12 border-gray-200">
+
+        <section id="overview">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold text-gray-800">The Crisis at a Glance</h3>
+                <p class="mt-2 text-md text-gray-500">Key statistics that highlight the depth of the crisis.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+                <div class="bg-white p-6 rounded-lg shadow-md stat-card">
+                    <p class="text-5xl font-bold text-red-600">72%</p>
+                    <p class="mt-2 font-semibold text-gray-700">of citizens believe</p>
+                    <p class="text-gray-500">the police are not effective in controlling crime.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md stat-card">
+                    <p class="text-5xl font-bold text-red-600">47%</p>
+                    <p class="mt-2 font-semibold text-gray-700">of citizens believe</p>
+                    <p class="text-gray-500">mob justice is 'sometimes justified' when the legal system is slow.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md stat-card">
+                    <p class="text-5xl font-bold text-red-600">3x</p>
+                    <p class="mt-2 font-semibold text-gray-700">increase in deaths</p>
+                    <p class="text-gray-500">from mob justice in 2024 compared to 2023.</p>
+                </div>
+            </div>
+
+            <div class="mt-16">
+                <div class="text-center mb-8">
+                    <h4 class="text-2xl font-bold text-gray-800">The 'Mob-Viral-Justice' Loop</h4>
+                    <p class="mt-2 text-md text-gray-500">How social distrust, digital rumors, and institutional inaction create a vicious cycle of violence. Click on each step to learn more.</p>
+                </div>
+                
+                <div class="relative max-w-4xl mx-auto">
+                    <div class="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-gray-300 -translate-y-1/2"></div>
+                    <div class="hidden md:block absolute top-1/2 left-1/2 w-0.5 h-32 bg-gray-300 -translate-y-full"></div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+                        <div class="loop-node bg-white p-4 rounded-lg shadow-lg text-center border-t-4 border-red-500" data-target="loop-text-1">
+                            <span class="text-3xl">👥</span>
+                            <h5 class="font-bold mt-2">1. Social Pressure</h5>
+                            <p class="text-sm text-gray-500">Distrust in the justice system</p>
+                        </div>
+                        <div class="loop-node bg-white p-4 rounded-lg shadow-lg text-center border-t-4 border-red-500" data-target="loop-text-2">
+                             <span class="text-3xl">📱</span>
+                            <h5 class="font-bold mt-2">2. Digital Rumors</h5>
+                            <p class="text-sm text-gray-500">Unverified information spreads</p>
+                        </div>
+                        <div class="loop-node bg-white p-4 rounded-lg shadow-lg text-center border-t-4 border-red-500" data-target="loop-text-3">
+                             <span class="text-3xl">🏃‍♂️</span>
+                            <h5 class="font-bold mt-2">3. Mob & Violence</h5>
+                            <p class="text-sm text-gray-500">Taking the law into own hands</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="loop-info" class="mt-8 bg-white p-6 rounded-lg shadow-inner min-h-[150px] flex items-center justify-center transition-all duration-300">
+                    <div id="loop-text-default" class="text-center text-gray-600">
+                        <p>Click on any step above to learn about its detailed mechanism.</p>
+                    </div>
+                    <div id="loop-text-1" class="hidden">
+                        <h5 class="font-bold text-lg text-red-700 mb-2">Socio-Political Pressure</h5>
+                        <p class="text-gray-700">Deep-seated distrust and corruption in the formal justice system create public demand for an alternative, informal solution. When state institutions fail, people feel encouraged to take the law into their own hands.</p>
+                    </div>
+                    <div id="loop-text-2" class="hidden">
+                        <h5 class="font-bold text-lg text-red-700 mb-2">Algorithmic Spread</h5>
+                        <p class="text-gray-700">Algorithms on platforms like Facebook and TikTok rapidly spread sensational and inflammatory content without verification. A baseless rumor (like child abduction or religious blasphemy) can go viral in hours, creating mass panic.</p>
+                    </div>
+                     <div id="loop-text-3" class="hidden">
+                        <h5 class="font-bold text-lg text-red-700 mb-2">Mob Action & Institutional Inaction</h5>
+                        <p class="text-gray-700">Viral content quickly transforms a virtual crowd into a physical mob, leading to violence. Subsequently, the inaction or failure of law enforcement lends a form of legitimacy to the mob action, preparing society for the next cycle.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <hr class="my-16 border-gray-200">
+
+        <section id="timeline">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold text-gray-800">Timeline of Violence</h3>
+                <p class="mt-2 text-md text-gray-500">The number of deaths from mob justice in recent years and its alarming increase.</p>
+            </div>
+            <div class="bg-white p-4 sm:p-6 rounded-lg shadow-lg">
+                <div class="chart-container">
+                    <canvas id="lynchingChart"></canvas>
+                </div>
+                <div class="mt-4 text-center">
+                    <p class="text-sm text-gray-500">Source: Compiled from Ain o Salish Kendra (ASK), Prothom Alo, Odhikar, and Human Rights Support Society (HRSS).</p>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-16 border-gray-200">
+
+        <section id="cases">
+             <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold text-gray-800">Faces of Tragedy: Notable Incidents</h3>
+                <p class="mt-2 text-md text-gray-500">These incidents are not just numbers; they are stories of destroyed lives and families.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="case-card bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="p-6">
+                        <div class="flex items-center mb-4">
+                            <span class="text-4xl mr-4">🌉</span>
+                            <div>
+                                <h4 class="font-bold text-xl">Taslima Begum Renu</h4>
+                                <p class="text-sm text-gray-500">July 2019, Dhaka</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-600">Taslima Begum Renu, a mother of two, fell victim to a baseless Facebook rumor that 'human heads' were needed for the Padma Bridge. While inquiring about her daughter's school admission, she was lynched on suspicion of being a 'child lifter'.</p>
+                    </div>
+                </div>
+                <div class="case-card bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="p-6">
+                        <div class="flex items-center mb-4">
+                            <span class="text-4xl mr-4">🎓</span>
+                            <div>
+                                <h4 class="font-bold text-xl">Tofazzal Hossain</h4>
+                                <p class="text-sm text-gray-500">September 2024, Dhaka University</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-600">Suspected of being a 'thief', Tofazzal Hossain was tortured for hours and killed by students in a residential hall at Dhaka University. This incident shows the terrifying spread of extrajudicial violence even among educated youth.</p>
+                    </div>
+                </div>
+                <div class="case-card bg-white rounded-lg shadow-md overflow-hidden">
+                    <div class="p-6">
+                        <div class="flex items-center mb-4">
+                            <span class="text-4xl mr-4">🔥</span>
+                             <div>
+                                <h4 class="font-bold text-xl">Communal Violence</h4>
+                                <p class="text-sm text-gray-500">Post-August 2024</p>
+                            </div>
+                        </div>
+                        <p class="text-gray-600">After the political transition, widespread attacks targeted religious minorities, especially the Hindu community. The violence in Hazari Lane, Chattogram, fueled by a Facebook post, is a prime example.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-16 border-gray-200">
+
+        <section id="causes">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold text-gray-800">Why the Rise? Analyzing the Root Causes</h3>
+                <p class="mt-2 text-md text-gray-500">The institutional, technological, and social factors behind mob justice.</p>
+            </div>
+
+            <div class="max-w-3xl mx-auto space-y-4">
+                <div class="accordion-item bg-white rounded-lg shadow-md">
+                    <button class="accordion-button w-full flex justify-between items-center p-5 text-left font-semibold text-lg">
+                        <span>1. Crisis of Trust: Failure of State Institutions</span>
+                        <span class="accordion-icon text-red-500 text-2xl">▼</span>
+                    </button>
+                    <div class="accordion-content hidden p-5 pt-0">
+                        <p class="text-gray-600">The primary driver of mob justice is extreme public distrust in the state's formal justice system. The police are seen as the country's most corrupt institution, and the judiciary is rendered ineffective by political interference and delays. This institutional failure creates a 'death cycle of rule of law,' where people feel compelled to take the law into their own hands.</p>
+                    </div>
+                </div>
+
+                <div class="accordion-item bg-white rounded-lg shadow-md">
+                    <button class="accordion-button w-full flex justify-between items-center p-5 text-left font-semibold text-lg">
+                        <span>2. Digital Storm: Misuse of Social Media</span>
+                        <span class="accordion-icon text-red-500 text-2xl">▼</span>
+                    </button>
+                    <div class="accordion-content hidden p-5 pt-0">
+                        <p class="text-gray-600">Social media platforms, especially Facebook, have turned into 'digital public courts.' Baseless rumors, hate speech, and incitement to violence spread rapidly. A lack of digital literacy and platform algorithms that prioritize sensational content complicate the problem, activating the 'Mob-Viral-Justice' loop.</p>
+                    </div>
+                </div>
+
+                <div class="accordion-item bg-white rounded-lg shadow-md">
+                    <button class="accordion-button w-full flex justify-between items-center p-5 text-left font-semibold text-lg">
+                        <span>3. Social and Political Context</span>
+                        <span class="accordion-icon text-red-500 text-2xl">▼</span>
+                    </button>
+                    <div class="accordion-content hidden p-5 pt-0">
+                        <p class="text-gray-600">Decades of violent political culture, the use of 'mob politics' for power, and deep societal divisions have created fertile ground for mob justice. When violence becomes an acceptable political tool, ordinary citizens also choose the same path to resolve disputes.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-16 border-gray-200">
+
+        <section id="solutions">
+             <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold text-gray-800">The Path Forward: A Blueprint for Reform</h3>
+                <p class="mt-2 text-md text-gray-500">A coordinated and multi-layered approach is needed to tackle this crisis.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-green-500">
+                    <h4 class="font-bold text-xl mb-3">⚖️ Institutional Reforms</h4>
+                    <ul class="list-disc list-inside text-gray-600 space-y-2">
+                        <li>Depoliticize the police force and form an independent oversight commission.</li>
+                        <li>Ensure judicial independence and invest to reduce case backlogs.</li>
+                        <li>Establish special fast-track courts for mob justice cases.</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-blue-500">
+                    <h4 class="font-bold text-xl mb-3">🌐 Digital Governance</h4>
+                     <ul class="list-disc list-inside text-gray-600 space-y-2">
+                        <li>Hold social media companies accountable for harms spread on their platforms.</li>
+                        <li>Push for swift removal of hate speech and incitement to violence.</li>
+                        <li>Launch a nationwide digital literacy campaign.</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-yellow-500">
+                    <h4 class="font-bold text-xl mb-3">🤝 Social Initiatives</h4>
+                     <ul class="list-disc list-inside text-gray-600 space-y-2">
+                        <li>Strengthen community policing to build trust between police and citizens.</li>
+                        <li>Raise public awareness that mob justice is murder, not justice.</li>
+                        <li>Promote long-term initiatives for dialogue and tolerance among communities.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-16 py-12">
+        <div class="container mx-auto px-4 text-center">
+            <h4 class="font-bold text-lg">About This Report</h4>
+            <div class="text-sm text-gray-400 mt-4 max-w-3xl mx-auto space-y-2">
+                <p>© 2025 Interactive Report. All information is based on public research and news reports.</p>
+                <p>Report initiated by: Mahidul Islam Nakib, Founder, Somogro Bangladesh.</p>
+                <p>This is a conceptual web application created for informational purposes.</p>
+            </div>
+            <div class="mt-8">
+                <p class="text-gray-300 mb-3 font-semibold">Share this report:</p>
+                <div class="flex justify-center space-x-4">
+                    <a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fexample.com&text=An%20Analysis%20of%20Mob%20Justice%20in%20Bangladesh" target="_blank" rel="noopener noreferrer" class="social-btn" aria-label="Share on Twitter">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.223.085c.645 1.956 2.52 3.379 4.738 3.419a9.868 9.868 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"></path></svg>
+                    </a>
+                    <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fexample.com" target="_blank" rel="noopener noreferrer" class="social-btn" aria-label="Share on Facebook">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.04c-5.5 0-10 4.49-10 10.02 0 5 3.66 9.15 8.44 9.9v-7.02H7.97v-2.89H10.4v-2.16c0-2.42 1.44-3.76 3.65-3.76 1.06 0 2.16.2 2.16.2v2.47h-1.27c-1.18 0-1.55.74-1.55 1.5v1.75h2.79l-.45 2.89h-2.34v7.02c4.78-.75 8.44-4.9 8.44-9.9C22 6.53 17.5 2.04 12 2.04z"></path></svg>
+                    </a>
+                    <a href="mailto:?subject=Interactive%20Report%3A%20Mob%20Justice%20in%20Bangladesh&body=Check%20out%20this%20analysis%20on%20mob%20justice%20in%20Bangladesh%3A%20https%3A%2F%2Fexample.com" class="social-btn" aria-label="Share via Email">
+                       <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z"></path></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            document.querySelectorAll('#mobile-menu a, .nav-link').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    if (this.getAttribute('href').startsWith('#')) {
+                        e.preventDefault();
+                        const targetId = this.getAttribute('href');
+                        const targetElement = document.querySelector(targetId);
+                        if (targetElement) {
+                            targetElement.scrollIntoView({ behavior: 'smooth' });
+                            if (!mobileMenu.classList.contains('hidden')) {
+                                mobileMenu.classList.add('hidden');
+                            }
+                        }
+                    }
+                });
+            });
+
+            const lynchingData = {
+                labels: ['2018', '2019', '2020', '2023', '2024 (Jan-Jun)', '2024 (Aug-Dec)'],
+                datasets: [{
+                    label: 'Number of Deaths from Mob Justice',
+                    data: [39, 65, 30, 51, 32, 179],
+                    backgroundColor: [
+                        'rgba(108, 117, 125, 0.6)',
+                        'rgba(108, 117, 125, 0.6)',
+                        'rgba(108, 117, 125, 0.6)',
+                        'rgba(108, 117, 125, 0.6)',
+                        'rgba(108, 117, 125, 0.6)',
+                        'rgba(220, 53, 69, 0.8)'
+                    ],
+                    borderColor: [
+                         'rgba(108, 117, 125, 1)',
+                        'rgba(108, 117, 125, 1)',
+                        'rgba(108, 117, 125, 1)',
+                        'rgba(108, 117, 125, 1)',
+                        'rgba(108, 117, 125, 1)',
+                        'rgba(220, 53, 69, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            };
+
+            const ctx = document.getElementById('lynchingChart').getContext('2d');
+            const myChart = new Chart(ctx, {
+                type: 'bar',
+                data: lynchingData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Deaths',
+                                font: {
+                                    size: 14,
+                                    family: "'Inter', sans-serif"
+                                }
+                            }
+                        },
+                        x: {
+                             title: {
+                                display: true,
+                                text: 'Year / Period',
+                                font: {
+                                    size: 14,
+                                    family: "'Inter', sans-serif"
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y + ' people';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const loopNodes = document.querySelectorAll('.loop-node');
+            const loopInfoContainer = document.getElementById('loop-info');
+            const defaultLoopText = document.getElementById('loop-text-default');
+            const loopInfoTexts = {
+                'loop-text-1': document.getElementById('loop-text-1'),
+                'loop-text-2': document.getElementById('loop-text-2'),
+                'loop-text-3': document.getElementById('loop-text-3'),
+            };
+
+            loopNodes.forEach(node => {
+                node.addEventListener('click', () => {
+                    const targetId = node.dataset.target;
+
+                    loopNodes.forEach(n => n.classList.remove('active'));
+                    node.classList.add('active');
+                    
+                    defaultLoopText.classList.add('hidden');
+                    Object.values(loopInfoTexts).forEach(text => text.classList.add('hidden'));
+                    
+                    if (loopInfoTexts[targetId]) {
+                        loopInfoTexts[targetId].classList.remove('hidden');
+                    }
+                });
+            });
+
+            const accordionItems = document.querySelectorAll('.accordion-item');
+            accordionItems.forEach(item => {
+                const button = item.querySelector('.accordion-button');
+                const content = item.querySelector('.accordion-content');
+
+                button.addEventListener('click', () => {
+                    const isVisible = !content.classList.contains('hidden');
+                    
+                    document.querySelectorAll('.accordion-content').forEach(c => c.classList.add('hidden'));
+                    document.querySelectorAll('.accordion-button').forEach(b => b.classList.remove('active'));
+
+                    if(isVisible) {
+                        content.classList.add('hidden');
+                        button.classList.remove('active');
+                    } else {
+                        content.classList.remove('hidden');
+                        button.classList.add('active');
+                    }
+                });
+            });
+            
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('main section[id]');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href').substring(1) === entry.target.id) {
+                                link.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            }, { rootMargin: '-30% 0px -70% 0px' });
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+
+        });
+    </script>
+</body>
+</html>
